@@ -45,6 +45,7 @@
           }
       }).then(function(answer) {
         // pick a specific item and from list
+        var x = answer.itemChoice
         connection.query("SELECT product_name, department_name, price, stock_quantity FROM products WHERE item_id = ?", answer.itemChoice,
         function(err, res) {
           if(err) throw err;
@@ -56,29 +57,51 @@
             " || Stock: " + res[0].stock_quantity
           );
         })
-        //Function quantity --> how much would you like
-         quantity(); 
+        var stock = res[0].stock_quantity
+        console.log("from START: stock , amount of item: " + stock)
+         quantity(x, stock); 
     })
   }
 
-  function quantity() {
-    inquirer.prompt({
-      name: "quantity",
-      type: "input",
-      message: "How many would you like?",
-      validate: function(value) {
-        if (isNaN(value) === false && value > 0 && value <=res[0].stock_quantity) {
-          return true;
-        }
-        return false;
+  //asks user how many of the item s/he would like to purchase
+function quantity(x, stock) {
+  //x is the user's selected item from the previous -- based on item_id
+  console.log("item choice: " + x)
+  inquirer.prompt({
+    name: "quantity",
+    type: "input",
+    message: "How many would you like to purchase?",
+    validate: function(value){
+      if (isNaN(value) === false) {
+        return true;
       }
-    }).then(function(answer){
-      
-      //IF or switch statement
-      //
+      return false;
+    }
+  }).then(function(answer){
+    // connection.query("SELECT product_name, department_name, price, stock_quantity FROM products WHERE item_id = ?"), x, function(err, res){
+    //   if(err) throw err;
+
+    if(answer.quantity > stock) {
       console.log("Insufficient quantity! We do not have enough of that item in stock.")
       start();
-    })
-
-  }
+    }
+    //subract the user amount from the original stock to create update variable
+    //Use the updated variable to update the stock in the table
+    var update = stock - answer.quantity
+    console.log("update in stock: " + update)
+    connection.query("UPDATE products SET ? WHERE ?",
+    [
+      {
+      stock_quantity: update
+    },
+  {
+    item_id: x
+  }],
+  function(error) {
+    if(error) throw err;
+    console.log("You have purchased " + answer.quantity + " of your item!")
+    start();
+  });
+  });
+}
 });
