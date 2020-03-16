@@ -14,7 +14,7 @@
 
  connection.connect(function(err) {
      if (err) throw err;
-     //run initial prompt;
+     //Show table to customer of all products, categories, price, and quantity
      console.log(query);
      var query = "SELECT item_id, product_name, department_name, price, stock_quantity FROM products";
         connection.query(query, function(err, res) {
@@ -44,29 +44,21 @@
             return false;
           }
       }).then(function(answer) {
-        // pick a specific item and from list
-        var x = answer.itemChoice
-        connection.query("SELECT product_name, department_name, price, stock_quantity FROM products WHERE item_id = ?", answer.itemChoice,
-        function(err, res) {
-          if(err) throw err;
-          //new query with relevant information for specific product based on selection 
-          //updating incase quantity has changed between user selection
-          console.log(
-            "Product: " + res[0].product_name +
-            " || Price: " + res[0].price +
-            " || Stock: " + res[0].stock_quantity
-          );
-        })
-        var stock = res[0].stock_quantity
-        console.log("from START: stock , amount of item: " + stock)
+        
+        //x sets the array number based on item_id
+        var x = answer.itemChoice - 1
+        console.log(
+          "Product: " + res[x].product_name +
+          " || Price: " + res[x].price +
+          " || Stock: " + res[x].stock_quantity + "\n"
+        );
+        var stock = res[x].stock_quantity
+
          quantity(x, stock); 
     })
   }
 
-  //asks user how many of the item s/he would like to purchase
 function quantity(x, stock) {
-  //x is the user's selected item from the previous -- based on item_id
-  console.log("item choice: " + x)
   inquirer.prompt({
     name: "quantity",
     type: "input",
@@ -78,30 +70,36 @@ function quantity(x, stock) {
       return false;
     }
   }).then(function(answer){
-    // connection.query("SELECT product_name, department_name, price, stock_quantity FROM products WHERE item_id = ?"), x, function(err, res){
-    //   if(err) throw err;
 
-    if(answer.quantity > stock) {
+    //setting answer for quantity to z to be able to reuse and pass into functions
+    var z = answer.quantity 
+    if(z < stock) {
+      updateStock(x, z, stock);
+    }  
+    else {
       console.log("Insufficient quantity! We do not have enough of that item in stock.")
-      start();
     }
-    //subract the user amount from the original stock to create update variable
-    //Use the updated variable to update the stock in the table
-    var update = stock - answer.quantity
-    console.log("update in stock: " + update)
+    connection.end();
+  });
+}
+
+  function updateStock(x, z, stock) {
+    //update determinew the change in stock based on the quantity of items the user selects
+    var update = stock - z
+
+    //y goes back to item_id insteado of array number
+    var y = x + 1
     connection.query("UPDATE products SET ? WHERE ?",
     [
       {
-      stock_quantity: update
-    },
-  {
-    item_id: x
-  }],
-  function(error) {
-    if(error) throw err;
-    console.log("You have purchased " + answer.quantity + " of your item!")
-    start();
-  });
-  });
-}
+        stock_quantity: update
+      },
+      {
+        item_id: y
+      }],
+      function(error) {
+        if(error) throw err;
+        console.log("You have purchased " + z + " of your item! \n")
+      });
+    }
 });
