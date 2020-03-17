@@ -42,8 +42,6 @@ function start() {
 }
 
 function inventory() {
-    connection.connect(function(err) {
-        if (err) throw err;
         var query = "SELECT item_id, product_name, department_name, price, stock_quantity FROM products";
         connection.query(query, function(err, res){
             if (err) throw err;
@@ -65,7 +63,6 @@ function inventory() {
                 connection.end;
                 start();
         });
-    });
 }
 
 function lowInventory () {
@@ -113,14 +110,14 @@ function addInventory1() {
                 output = table(productDisplay);
                 console.log(output);
                 connection.end;
-                addQuestions();
+                addQuestions(res);
         });
     });
 }
 
 
 
-function addQuestions() {
+function addQuestions(res) {
     inquirer.prompt([
         {
             name: "itemID",
@@ -135,12 +132,13 @@ function addQuestions() {
     ]).then(function(answer){
         var itemID = parseInt(answer.itemID);
         var addStock = parseInt(answer.addedStock)
+        var oStock = res[itemID-1].stock_quantity
         console.log("Selected number: " + itemID + "\n Amount to Add: "
         + addStock)
         var query = connection.query("UPDATE products SET ? WHERE ?",
         [
             {
-                stock_quantity: addStock
+                stock_quantity: addStock + oStock
             },
             {
                 item_id: itemID
