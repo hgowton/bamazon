@@ -26,7 +26,7 @@ function start() {
             lowInventory();
         }
         else if(answer.actionToTake === "Add to Inventory"){
-            addInventory();
+            addInventory1();
 
         }
         else if(answer.actionToTake === "Add New Product"){
@@ -91,7 +91,7 @@ function lowInventory () {
     })
 }
 
-function addInventory() {
+function addInventory1() {
     connection.connect(function(err) {
         if (err) throw err;
         var query = "SELECT item_id, product_name, department_name, price, stock_quantity FROM products";
@@ -118,6 +118,8 @@ function addInventory() {
     });
 }
 
+
+
 function addQuestions() {
     inquirer.prompt([
         {
@@ -135,6 +137,69 @@ function addQuestions() {
         var addStock = parseInt(answer.addedStock)
         console.log("Selected number: " + itemID + "\n Amount to Add: "
         + addStock)
-        })
+        var query = connection.query("UPDATE products SET ? WHERE ?",
+        [
+            {
+                stock_quantity: addStock
+            },
+            {
+                item_id: itemID
+            }
+        ], function(err, res) {
+            if(err) throw err;
+            console.log(res.affectedRows + " products updated!\n");
+            connection.end();
+            console.log(query.sql)
+        });
+    })
 }
 
+function addProduct() {
+    connection.query("SELECT * FROM products", function(err, results) {
+        if (err) throw err;
+        inquirer.prompt([
+            {
+                name: "productAdd",
+                type: "input",
+                message: "What is the name of the product you would like to add?"
+            },
+            {
+                name: "department",
+                type: "rawlist",
+                choices: function() {
+                    var choiceArray = []; 
+                    for (var i=0; i<results.length; i++) {
+                        choiceArray.push(results[i].department_name);
+                    }
+                    return choiceArray;
+                },
+                message: "Which department does this product fall into?"
+            },
+            {
+                name: "cost",
+                type: "number",
+                message: "How much does it cost?"
+            },
+            {
+                name: "stock",
+                type: "number",
+                message: "What is the original stock of the item?"
+            }
+        ]).then(function(answer) {
+            connection.query(
+                "INSERT INTO products SET ?",
+                {
+                    product_name: answer.productAdd,
+                    department_name: answer.department,
+                    price: answer.cost,
+                    stock_quantity: answer.stock
+                },
+                function(err, res) {
+                    if (err) throw err;
+                    console.log(res.affectedRows + "product added!\n");
+                    connection.end();
+                }
+            );
+        });
+    });
+} 
