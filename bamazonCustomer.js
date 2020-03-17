@@ -16,7 +16,7 @@
      if (err) throw err;
      //Show table to customer of all products, categories, price, and quantity
      console.log(query);
-     var query = "SELECT item_id, product_name, department_name, price, stock_quantity FROM products";
+     var query = "SELECT item_id, product_name, product_sales, department_name, price, stock_quantity FROM products";
         connection.query(query, function(err, res) {
           if (err) throw err;
           var productDisplay = [
@@ -53,12 +53,14 @@
           " || Stock: " + res[x].stock_quantity + "\n"
         );
         var stock = res[x].stock_quantity
+        var w = res[x].product_sales
+        console.log("product sales: " + w)
 
-         quantity(x, stock); 
+         quantity(x, stock, w); 
     })
   }
 
-function quantity(x, stock) {
+function quantity(x, stock, w) {
   inquirer.prompt({
     name: "quantity",
     type: "input",
@@ -74,7 +76,7 @@ function quantity(x, stock) {
     //setting answer for quantity to z to be able to reuse and pass into functions
     var z = answer.quantity 
     if(z < stock) {
-      updateStock(x, z, stock);
+      updateStock(x, z, stock, w);
     }  
     else {
       console.log("Insufficient quantity! We do not have enough of that item in stock.")
@@ -83,16 +85,19 @@ function quantity(x, stock) {
   });
 }
 
-  function updateStock(x, z, stock) {
+  function updateStock(x, z, stock, w) {
     //update determinew the change in stock based on the quantity of items the user selects
     var update = stock - z
 
     //y goes back to item_id insteado of array number
     var y = x + 1
+    var productSales = parseInt(z) + parseInt(w)
+    console.log(productSales);
     connection.query("UPDATE products SET ? WHERE ?",
     [
       {
-        stock_quantity: update
+        stock_quantity: update,
+        product_sales: productSales
       },
       {
         item_id: y
