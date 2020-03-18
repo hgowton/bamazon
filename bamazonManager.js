@@ -21,21 +21,21 @@ function start() {
     }).then(function(answer){
         if(answer.actionToTake === "View products for sale"){
             inventory();
+
         }
         else if(answer.actionToTake === "View low inventory"){
             lowInventory();
+
         }
         else if(answer.actionToTake === "Add to Inventory"){
-            addInventory1();
+            addInventory();
 
         }
         else if(answer.actionToTake === "Add New Product"){
             addProduct();
+
         }
         else if(answer.actionToTake === "Exit"){
-            connection.end();
-        }
-        else{
             connection.end();
         }
     })
@@ -60,13 +60,12 @@ function inventory() {
             }
                 output = table(productDisplay);
                 console.log(output);
-                connection.end;
-                start();
+                connection.end();
         });
 }
 
 function lowInventory () {
-    var query = "SELECT * FROM products WHERE stock_quantity <=20";
+    var query = "SELECT * FROM products WHERE stock_quantity <=5";
     connection.query(query, function(err, res) {
         var inventoryDisplay=[
             ['Item_id', 'product', 'sales', 'department', 'price', 'stock']
@@ -83,12 +82,11 @@ function lowInventory () {
         }
             output = table(inventoryDisplay);
             console.log(output);
-            connection.end;
-            start();
+            connection.end();
     })
 }
 
-function addInventory1() {
+function addInventory() {
     connection.connect(function(err) {
         if (err) throw err;
         var query = "SELECT item_id, product_name, department_name, price, stock_quantity FROM products";
@@ -109,8 +107,8 @@ function addInventory1() {
             }
                 output = table(productDisplay);
                 console.log(output);
-                connection.end;
                 addQuestions(res);
+                //connection.end();
         });
     });
 }
@@ -153,7 +151,7 @@ function addQuestions(res) {
 }
 
 function addProduct() {
-    connection.query("SELECT * FROM products", function(err, results) {
+    connection.query("SELECT DISTINCT department_name FROM products", function(err, results) {
         if (err) throw err;
         inquirer.prompt([
             {
